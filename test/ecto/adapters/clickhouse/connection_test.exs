@@ -269,6 +269,31 @@ defmodule Ecto.Adapters.ClickHouse.ConnectionTest do
              """
   end
 
+  test "materialized common table expression" do
+    scope_query =
+      "comments" |> where([c], is_nil(c.deleted_at)) |> select([c], %{entity_id: c.entity_id})
+
+    query =
+      "posts"
+      |> with_cte("comments_scope", as: ^scope_query, materialized: true)
+      |> with_cte("plain_scope", as: ^scope_query, materialized: false)
+      |> join(:inner, [p], c in "comments_scope", on: c.entity_id == p.guid)
+      |> join(:inner, [p], c in "plain_scope", on: c.entity_id == p.guid)
+      |> select([p], p.title)
+
+    assert all(query) ==
+             """
+             WITH "comments_scope" AS MATERIALIZED (\
+             SELECT sc0."entity_id" AS "entity_id" FROM "comments" AS sc0 WHERE (isNull(sc0."deleted_at"))),\
+             "plain_scope" AS (\
+             SELECT sc0."entity_id" AS "entity_id" FROM "comments" AS sc0 WHERE (isNull(sc0."deleted_at"))) \
+             SELECT p0."title" \
+             FROM "posts" AS p0 \
+             INNER JOIN "comments_scope" AS c1 ON c1."entity_id" = p0."guid" \
+             INNER JOIN "plain_scope" AS p2 ON p2."entity_id" = p0."guid"\
+             """
+  end
+
   @raw_sql_cte """
   SELECT * FROM categories WHERE c.parent_id IS NULL \
   UNION ALL \
