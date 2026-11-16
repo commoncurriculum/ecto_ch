@@ -40,7 +40,7 @@ defmodule EctoCh.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ch, github: "commoncurriculum/ch", ref: "3310634042fed9fc4548d75eb6a13fe2ee68b0d6"},
+      {:ch, github: "commoncurriculum/ch", ref: "647f1118f31c8bd4d307d55a946013e53aa8b5d8"},
       {:ecto_sql, "~> 3.14.0"},
       {:benchee, "~> 1.1", only: :bench},
       {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false},

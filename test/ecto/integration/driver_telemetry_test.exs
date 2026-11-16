@@ -25,7 +25,7 @@ defmodule Ecto.Integration.DriverTelemetryTest do
     assert [] = TestRepo.all(from p in Post, where: p.title == ^"telemetry", select: p.id)
 
     assert_receive {[:ch, :query, :start],
-                    %{query: %Ch.Query{command: :select, statement: statement}}}
+                    %{query: %Ch.Query{command: :select, statement: statement}, source: "posts"}}
 
     assert IO.iodata_to_binary(statement) =~ ~s[FROM "posts"]
     assert_receive {[:ch, :query, :stop], %{error: nil}}
@@ -34,6 +34,20 @@ defmodule Ecto.Integration.DriverTelemetryTest do
   test "a repo insert emits the driver's query events" do
     TestRepo.insert!(%Post{title: "telemetry"})
 
-    assert_receive {[:ch, :query, :stop], %{query: %Ch.Query{command: :insert}, error: nil}}
+    assert_receive {[:ch, :query, :stop],
+                    %{query: %Ch.Query{command: :insert}, source: "posts", error: nil}}
+  end
+
+  test "a repo insert_all emits the driver's query events with its table" do
+    TestRepo.insert_all(Post, [%{title: "telemetry"}])
+
+    assert_receive {[:ch, :query, :stop],
+                    %{query: %Ch.Query{command: :insert}, source: "posts", error: nil}}
+  end
+
+  test "a repo insert_stream emits the driver's query events with its table" do
+    TestRepo.insert_stream(Post, [%{title: "telemetry"}])
+
+    assert_receive {[:ch, :query, :start], %{query: %Ch.Query{command: :insert}, source: "posts"}}
   end
 end
