@@ -369,8 +369,10 @@ defmodule Ecto.Adapters.ClickHouse.Connection do
     recursive_opt = if recursive, do: "RECURSIVE ", else: ""
 
     ctes =
-      intersperse_map(queries, ?,, fn {name, _opts, cte} ->
-        [quote_name(name), " AS ", cte_query(cte, sources, params, query)]
+      intersperse_map(queries, ?,, fn {name, opts, cte} ->
+        # ClickHouse has no NOT MATERIALIZED, so `materialized: false` writes a plain CTE.
+        materialized_opt = if opts[:materialized], do: "MATERIALIZED ", else: ""
+        [quote_name(name), " AS ", materialized_opt, cte_query(cte, sources, params, query)]
       end)
 
     ["WITH ", recursive_opt, ctes, " "]
