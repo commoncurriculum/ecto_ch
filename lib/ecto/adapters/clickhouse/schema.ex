@@ -18,7 +18,7 @@ defmodule Ecto.Adapters.ClickHouse.Schema do
         opts
       ) do
     %{source: source, prefix: prefix} = schema_meta
-    opts = [{:command, :insert} | opts]
+    opts = [{:command, :insert}, {:source, source} | opts]
 
     %{num_rows: num_rows} =
       case rows do
@@ -151,7 +151,7 @@ defmodule Ecto.Adapters.ClickHouse.Schema do
     names = prepare_names(header)
     types = prepare_types(schema, header, opts)
     sql = [@conn.insert(prefix, source, [], []) | " FORMAT RowBinaryWithNamesAndTypes"]
-    opts = [{:command, :insert}, {:names, names}, {:types, types} | opts]
+    opts = [{:command, :insert}, {:source, source}, {:names, names}, {:types, types} | opts]
 
     Ecto.Adapters.SQL.query!(adapter_meta, sql, [row], opts)
     {:ok, []}
@@ -196,7 +196,7 @@ defmodule Ecto.Adapters.ClickHouse.Schema do
 
     types = Ch.RowBinary.encoding_types(types)
     names = prepare_names(header)
-    opts = [{:command, :insert}, {:encode, false} | opts]
+    opts = [{:command, :insert}, {:source, source}, {:encode, false} | opts]
     sql = [@conn.insert(prefix, source, [], []) | " FORMAT RowBinaryWithNamesAndTypes"]
 
     row_binary =
@@ -218,7 +218,7 @@ defmodule Ecto.Adapters.ClickHouse.Schema do
     %{source: source, prefix: prefix} = schema_meta
     filter_values = Keyword.values(params)
     sql = @conn.delete(prefix, source, params, [])
-    Ecto.Adapters.SQL.query!(adapter_meta, sql, filter_values, opts)
+    Ecto.Adapters.SQL.query!(adapter_meta, sql, filter_values, [source: source] ++ opts)
     {:ok, []}
   end
 
