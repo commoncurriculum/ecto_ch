@@ -146,7 +146,7 @@ defmodule Ecto.Adapters.ClickHouse.TimestampsTest do
     [[timezone]] = TestRepo.query!("select timezone()").rows
 
     # Ecto casts ~U[] to ~N[] since Product schema uses `:naive_datetime` for timestamps
-    if timezone == "UTC" do
+    if timezone in ["UTC", "Etc/UTC"] do
       assert Product |> where(approved_at: ^time) |> TestRepo.exists?()
     else
       refute Product |> where(approved_at: ^time) |> TestRepo.exists?()
